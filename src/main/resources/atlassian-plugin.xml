@@ -1,0 +1,45 @@
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+    </plugin-info>
+
+    <macro name="swingweb-events" class="se.microcode.confluence.plugin.EventsMacro" key="swingweb-events">
+        <description>Parse SwingWeb courses and display them in a sensible way</description>
+        <parameters>
+            <parameter name="url" type="string" required="true"/>
+            <parameter name="type" type="string"/>
+            <parameter name="hide_categories" type="string"/>
+            <parameter name="show_categories" type="string"/>
+            <parameter name="hide_states" type="enum" multiple="true">
+                <value name="unopened"/>
+                <value name="interest"/>
+                <value name="direct"/>
+                <value name="open"/>
+                <value name="late"/>
+                <value name="closed"/>
+                <value name="hidden"/>
+            </parameter>
+            <parameter name="show_states" type="enum" multiple="true">
+                <value name="unopened"/>
+                <value name="interest"/>
+                <value name="direct"/>
+                <value name="open"/>
+                <value name="late"/>
+                <value name="closed"/>
+                <value name="hidden"/>
+            </parameter>
+            <parameter name="minLevel" type="string" default="0"/>
+            <parameter name="maxLevel" type="string" default="0"/>
+            <parameter name="limit" type="string" default=""/>
+            <parameter name="sort" type="enum" default="">
+                <value name="show"/>
+                <value name="direct"/>
+                <value name="late"/>
+                <value name="hide"/>
+            </parameter>
+        </parameters>
+    </macro>
+
+</atlassian-plugin>
