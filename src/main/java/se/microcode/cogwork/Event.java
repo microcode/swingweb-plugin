@@ -286,13 +286,14 @@ public class Event
             return STATE_HIDDEN;
         }
 
+        Date lateReg = registrationPeriods.startLateReg != null ? registrationPeriods.startLateReg : now;
+        Date closeReg = registrationPeriods.closeReg != null ? registrationPeriods.closeReg : lateReg;
         Date startShowing = registrationPeriods.startShowing != null ? registrationPeriods.startShowing : now;
-        Date stopShowing = registrationPeriods.stopShowing != null ? registrationPeriods.stopShowing : now;
-        Date closeReg = registrationPeriods.closeReg != null ? registrationPeriods.closeReg : now;
+        Date stopShowing = registrationPeriods.stopShowing != null ? registrationPeriods.stopShowing : closeReg;
 
-        if (now.compareTo(startShowing) < 0 || now.compareTo(stopShowing) >= 0)
+        if (now.compareTo(stopShowing) >= 0)
         {
-            return STATE_HIDDEN;
+            return STATE_CLOSED;
         }
 
         if (now.compareTo(closeReg) >= 0)
@@ -318,6 +319,11 @@ public class Event
         if (registrationPeriods.startInterestReg != null && now.compareTo(registrationPeriods.startInterestReg) >= 0)
         {
             return STATE_INTEREST;
+        }
+
+        if (now.compareTo(startShowing) < 0)
+        {
+            return STATE_HIDDEN;
         }
 
         return STATE_UNOPENED;
