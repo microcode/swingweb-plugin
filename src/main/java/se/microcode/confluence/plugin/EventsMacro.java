@@ -86,6 +86,7 @@ public class EventsMacro extends BaseMacro
     private static final String MAXLEVEL_PARAM = "maxLevel";
     private static final String LIMIT_PARAM = "limit";
     private static final String SORT_PARAM ="sort";
+    private static final String STARTED_PARAM = "started";
 
     public String execute(Map params, String body, RenderContext renderContext) throws MacroException
     {
@@ -99,6 +100,7 @@ public class EventsMacro extends BaseMacro
         String maxLevelParam = (String)params.get(MAXLEVEL_PARAM);
         String limitParam = (String)params.get(LIMIT_PARAM);
         String sortParam = (String)params.get(SORT_PARAM);
+        String startedParam = (String)params.get(STARTED_PARAM);
 
         CacheFactory cacheFactory = (CacheFactory) ContainerManager.getComponent("cacheManager");
         Cache cache = cacheFactory.getCache("se.nackswinget.confluence.plugin.courses");
@@ -226,7 +228,6 @@ public class EventsMacro extends BaseMacro
                             }
                             break;
                         }
-
                     }
 
                     if (!filtered)
@@ -374,6 +375,31 @@ public class EventsMacro extends BaseMacro
                 }
 
                 events = newEvents;
+            }
+
+            if (startedParam != null)
+            {
+                boolean filter = "yes".equalsIgnoreCase(startedParam);
+                Date now = Calendar.getInstance().getTime();
+
+                List<Event> newEvents = new ArrayList<Event>();
+                for (Event event : events)
+                {
+                    if (event.schedule == null || event.schedule.startDate == null)
+                    {
+                        continue;
+                    }
+
+                    boolean started = event.schedule.startDate.compareTo(now) >= 0;
+                    if ((!started && !filter) || (started && filter))
+                    {
+                        continue;
+                    }
+
+                    newEvents.add(event);
+                }
+                events = newEvents;
+
             }
         }
 
