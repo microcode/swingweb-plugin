@@ -326,6 +326,11 @@ public class Event
             return STATE_HIDDEN;
         }
 
+        if (registrationPeriods.startOpenReg == null && registrationPeriods.startInterestReg == null && registrationPeriods.startShowing != null && now.compareTo(registrationPeriods.startShowing) >= 0)
+        {
+            return STATE_OPEN;
+        }
+
         return STATE_UNOPENED;
     }
 
