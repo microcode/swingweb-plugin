@@ -1,6 +1,5 @@
-package se.microcode.confluence.plugin.wiki;
+package se.microcode.confluence.plugin.base;
 
-import com.atlassian.confluence.macro.params.SortType;
 import se.microcode.cogwork.EventState;
 
 public class EventsMacroArguments

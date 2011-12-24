@@ -1,4 +1,4 @@
-package se.microcode.confluence.plugin.wiki;
+package se.microcode.confluence.plugin.base;
 
 public enum SortOrder
 {

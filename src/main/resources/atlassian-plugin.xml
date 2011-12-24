@@ -8,11 +8,15 @@
     <macro name="swingweb-events" class="se.microcode.confluence.plugin.wiki.EventsMacro" key="swingweb-events">
         <description>Parse SwingWeb courses and display them in a sensible way</description>
         <parameters>
+            <parameter name="type" type="enum">
+                <value name="velocity"/>
+                <value name="xhtml"/>
+                <value name="wiki"/>
+            </parameter>
             <parameter name="url" type="string" required="true"/>
-            <parameter name="type" type="string"/>
-            <parameter name="hide_categories" type="string"/>
-            <parameter name="show_categories" type="string"/>
-            <parameter name="hide_states" type="enum" multiple="true">
+            <parameter name="hideCategories" type="int" multiple="true"/>
+            <parameter name="showCategories" type="int" multiple="true"/>
+            <parameter name="hideStates" type="enum" multiple="true">
                 <value name="unopened"/>
                 <value name="interest"/>
                 <value name="direct"/>
@@ -21,7 +25,7 @@
                 <value name="closed"/>
                 <value name="hidden"/>
             </parameter>
-            <parameter name="show_states" type="enum" multiple="true">
+            <parameter name="showStates" type="enum" multiple="true">
                 <value name="unopened"/>
                 <value name="interest"/>
                 <value name="direct"/>
@@ -30,16 +34,64 @@
                 <value name="closed"/>
                 <value name="hidden"/>
             </parameter>
-            <parameter name="minLevel" type="string" default="0"/>
-            <parameter name="maxLevel" type="string" default="0"/>
-            <parameter name="limit" type="string" default=""/>
-            <parameter name="sort" type="enum" default="">
+            <parameter name="minLevel" type="int"/>
+            <parameter name="maxLevel" type="int"/>
+            <parameter name="limit" type="int"/>
+            <parameter name="sort" type="enum">
                 <value name="show"/>
                 <value name="direct"/>
                 <value name="late"/>
                 <value name="hide"/>
             </parameter>
+            <parameter name="started" type="enum">
+                <value name="yes"/>
+                <value name="no"/>
+            </parameter>
         </parameters>
     </macro>
 
+    <xhtml-macro name="swingweb-events" class="se.microcode.confluence.plugin.xhtml.EventsMacro" key="swingweb-events-xhtml">
+        <description>Parse SwingWeb courses and display them in a sensible way</description>
+        <parameters>
+            <parameter name="type" type="enum">
+                <value name="velocity"/>
+                <value name="xhtml"/>
+                <value name="wiki"/>
+            </parameter>
+            <parameter name="url" type="string" required="true"/>
+            <parameter name="hideCategories" type="int" multiple="true"/>
+            <parameter name="showCategories" type="int" multiple="true"/>
+            <parameter name="hideStates" type="enum" multiple="true">
+                <value name="unopened"/>
+                <value name="interest"/>
+                <value name="direct"/>
+                <value name="open"/>
+                <value name="late"/>
+                <value name="closed"/>
+                <value name="hidden"/>
+            </parameter>
+            <parameter name="showStates" type="enum" multiple="true">
+                <value name="unopened"/>
+                <value name="interest"/>
+                <value name="direct"/>
+                <value name="open"/>
+                <value name="late"/>
+                <value name="closed"/>
+                <value name="hidden"/>
+            </parameter>
+            <parameter name="minLevel" type="int"/>
+            <parameter name="maxLevel" type="int"/>
+            <parameter name="limit" type="int"/>
+            <parameter name="sort" type="enum">
+                <value name="show"/>
+                <value name="direct"/>
+                <value name="late"/>
+                <value name="hide"/>
+            </parameter>
+            <parameter name="started" type="enum">
+                <value name="yes"/>
+                <value name="no"/>
+            </parameter>
+        </parameters>
+    </xhtml-macro>
 </atlassian-plugin>

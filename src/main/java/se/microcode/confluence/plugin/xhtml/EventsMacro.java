@@ -1,45 +1,39 @@
-package se.microcode.confluence.plugin.wiki;
+package se.microcode.confluence.plugin.xhtml;
 
-import com.atlassian.cache.Cache;
-import com.atlassian.cache.CacheFactory;
+import com.atlassian.confluence.content.render.xhtml.ConversionContext;
+import com.atlassian.confluence.macro.Macro;
+import com.atlassian.confluence.macro.MacroExecutionException;
 import com.atlassian.confluence.renderer.radeox.macros.MacroUtils;
-import com.atlassian.confluence.util.http.HttpResponse;
 import com.atlassian.confluence.util.http.HttpRetrievalService;
 import com.atlassian.confluence.util.velocity.VelocityUtils;
-import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.WikiStyleRenderer;
-import com.atlassian.renderer.v2.RenderMode;
-import com.atlassian.renderer.v2.macro.BaseMacro;
-import com.atlassian.renderer.v2.macro.MacroException;
-
-import com.atlassian.spring.container.ContainerManager;
+import com.opensymphony.webwork.ServletActionContext;
 import com.thoughtworks.xstream.XStream;
-
-import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.mapper.MapperWrapper;
-
-import se.microcode.cogwork.*;
 import se.microcode.base.ArgumentParser;
 import se.microcode.base.ArgumentResolver;
+import se.microcode.cogwork.Courses;
+import se.microcode.cogwork.Event;
+import se.microcode.confluence.plugin.base.EventSorter;
+import se.microcode.confluence.plugin.base.EventsHelper;
+import se.microcode.confluence.plugin.base.EventsMacroArguments;
+import se.microcode.confluence.plugin.base.SortOrder;
 
-import com.opensymphony.webwork.ServletActionContext;
-import se.microcode.confluence.plugin.base.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
-import java.io.IOException;
-import java.util.*;
-
-public class EventsMacro extends BaseMacro
+public class EventsMacro implements Macro
 {
-    public RenderMode getBodyRenderMode()
+    public BodyType getBodyType()
     {
-        return RenderMode.NO_RENDER;
+        return BodyType.PLAIN_TEXT;
     }
 
-    public boolean hasBody()
+    public OutputType getOutputType()
     {
-        return true;
+        return OutputType.BLOCK;
     }
 
     private HttpRetrievalService httpRetrievalService;
@@ -71,7 +65,7 @@ public class EventsMacro extends BaseMacro
         xstream.processAnnotations(Courses.class);
     }
 
-    public String execute(Map params, String body, RenderContext renderContext) throws MacroException
+    public String execute(Map<String,String> params, String body, ConversionContext conversionContext) throws MacroExecutionException
     {
         EventsMacroArguments args = (EventsMacroArguments)ArgumentParser.parse(new EventsMacroArguments(), params, new ArgumentResolver() {
             @Override
@@ -82,13 +76,13 @@ public class EventsMacro extends BaseMacro
 
         if (args.url == null)
         {
-            throw new MacroException("No URL source specified");
+            throw new MacroExecutionException("No URL source specified");
         }
 
         Courses courses = EventsHelper.fetchCourses(args.url, httpRetrievalService, xstream);
         if (courses == null || courses.events == null)
         {
-            throw new MacroException("Could not download events");
+            throw new MacroExecutionException("Could not download events");
         }
 
         List<Event> events = new ArrayList<Event>(courses.events.entries);
