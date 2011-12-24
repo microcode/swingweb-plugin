@@ -9,6 +9,6 @@ import se.microcode.cogwork.converters.CategoryConverter;
 public class Category
 {
     public String categoryId;
-
+    public int categoryIndex;
     public String name;
 }

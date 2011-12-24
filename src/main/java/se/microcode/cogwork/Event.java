@@ -14,14 +14,6 @@ import java.util.regex.Pattern;
 @XStreamAlias("event")
 public class Event
 {
-    public static final int STATE_UNOPENED = 0;
-    public static final int STATE_INTEREST = 1;
-    public static final int STATE_DIRECT = 2;
-    public static final int STATE_OPEN = 3;
-    public static final int STATE_LATE = 4;
-    public static final int STATE_CLOSED = 5;
-    public static final int STATE_HIDDEN = 6;
-
     @XStreamAsAttribute
     public int eventId;
 
@@ -277,13 +269,13 @@ public class Event
         return 0;
     }
 
-    public int getEventState()
+    public EventState getEventState()
     {
         Date now = Calendar.getInstance().getTime();
 
         if (registrationPeriods == null)
         {
-            return STATE_HIDDEN;
+            return EventState.HIDDEN;
         }
 
         Date lateReg = registrationPeriods.startLateReg != null ? registrationPeriods.startLateReg : now;
@@ -293,45 +285,45 @@ public class Event
 
         if (now.compareTo(stopShowing) >= 0)
         {
-            return STATE_CLOSED;
+            return EventState.CLOSED;
         }
 
         if (now.compareTo(closeReg) >= 0)
         {
-            return STATE_CLOSED;
+            return EventState.CLOSED;
         }
 
         if (registrationPeriods.startLateReg != null && now.compareTo(registrationPeriods.startLateReg) >= 0)
         {
-            return STATE_LATE;
+            return EventState.LATE;
         }
 
         if (registrationPeriods.startOpenReg != null && now.compareTo(registrationPeriods.startOpenReg) >= 0)
         {
-            return STATE_OPEN;
+            return EventState.OPEN;
         }
 
         if (registrationPeriods.startDirectReg != null && now.compareTo(registrationPeriods.startDirectReg) >= 0)
         {
-            return STATE_DIRECT;
+            return EventState.DIRECT;
         }
 
         if (registrationPeriods.startInterestReg != null && now.compareTo(registrationPeriods.startInterestReg) >= 0)
         {
-            return STATE_INTEREST;
+            return EventState.INTEREST;
         }
 
         if (now.compareTo(startShowing) < 0)
         {
-            return STATE_HIDDEN;
+            return EventState.HIDDEN;
         }
 
         if (registrationPeriods.startOpenReg == null && registrationPeriods.startInterestReg == null && registrationPeriods.startShowing != null && now.compareTo(registrationPeriods.startShowing) >= 0)
         {
-            return STATE_OPEN;
+            return EventState.OPEN;
         }
 
-        return STATE_UNOPENED;
+        return EventState.UNOPENED;
     }
 
     public String getLongDescription()
@@ -351,9 +343,9 @@ public class Event
     {
         switch (getEventState())
         {
-            case STATE_CLOSED:
-            case STATE_HIDDEN:
-            case STATE_UNOPENED:
+            case CLOSED:
+            case HIDDEN:
+            case UNOPENED:
                 return "http://www.swingweb.org/tools/reg/?org=nsw;eventId=" + getEventId() + ";info=1";
         }
 

@@ -23,6 +23,11 @@ public class CategoryConverter implements Converter
         Category category = new Category();
 
         category.categoryId = reader.getAttribute("categoryId");
+        int categoryOffset = category.categoryId.lastIndexOf('_');
+        if (categoryOffset >= 0)
+        {
+            category.categoryIndex = Integer.valueOf(category.categoryId.substring(categoryOffset+1));
+        }
         category.name = reader.getValue();
 
         return category;

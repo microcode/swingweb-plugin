@@ -1,4 +1,4 @@
-package se.microcode.confluence.plugin;
+package se.microcode.confluence.plugin.wiki;
 
 import com.atlassian.cache.Cache;
 import com.atlassian.cache.CacheFactory;
@@ -18,7 +18,10 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.mapper.MapperWrapper;
 import org.apache.velocity.VelocityContext;
+
 import se.microcode.cogwork.*;
+import se.microcode.base.ArgumentParser;
+import se.microcode.base.ArgumentResolver;
 
 import com.opensymphony.webwork.ServletActionContext;
 import javax.servlet.http.HttpServletRequest;
@@ -42,14 +45,6 @@ public class EventsMacro extends BaseMacro
 
     private HttpRetrievalService httpRetrievalService;
     private WikiStyleRenderer wikiStyleRenderer;
-
-    public enum CompareKey
-    {
-        SHOW_DATE,
-        DIRECT_DATE,
-        LATE_DATE,
-        HIDE_DATE
-    };
 
     public EventsMacro(HttpRetrievalService httpRetrievalService, WikiStyleRenderer wikiStyleRenderer)
     {
@@ -76,31 +71,14 @@ public class EventsMacro extends BaseMacro
         xstream.processAnnotations(Courses.class);
     }
 
-    private static final String TYPE_PARAM = "type";
-    private static final String URL_PARAM = "url";
-    private static final String HIDECATEGORIES_PARAM = "hide_categories";
-    private static final String SHOWCATEGORIES_PARAM = "show_categories";
-    private static final String HIDESTATES_PARAM = "hide_states";
-    private static final String SHOWSTATES_PARAM = "show_states";
-    private static final String MINLEVEL_PARAM = "minLevel";
-    private static final String MAXLEVEL_PARAM = "maxLevel";
-    private static final String LIMIT_PARAM = "limit";
-    private static final String SORT_PARAM ="sort";
-    private static final String STARTED_PARAM = "started";
-
     public String execute(Map params, String body, RenderContext renderContext) throws MacroException
     {
-        String typeParam = (String)params.get(TYPE_PARAM);
-        String urlParam = (String)params.get(URL_PARAM);
-        String hideCategoriesParam = (String)params.get(HIDECATEGORIES_PARAM);
-        String showCategoriesParam = (String)params.get(SHOWCATEGORIES_PARAM);
-        String hideStatesParam = (String)params.get(HIDESTATES_PARAM);
-        String showStatesParam = (String)params.get(SHOWSTATES_PARAM);
-        String minLevelParam = (String)params.get(MINLEVEL_PARAM);
-        String maxLevelParam = (String)params.get(MAXLEVEL_PARAM);
-        String limitParam = (String)params.get(LIMIT_PARAM);
-        String sortParam = (String)params.get(SORT_PARAM);
-        String startedParam = (String)params.get(STARTED_PARAM);
+        EventsMacroArguments args = (EventsMacroArguments)ArgumentParser.parse(new EventsMacroArguments(), params, new ArgumentResolver() {
+            @Override
+            public String get(String s) {
+                return ServletActionContext.getRequest().getParameter(s);
+            }
+        });
 
         CacheFactory cacheFactory = (CacheFactory) ContainerManager.getComponent("cacheManager");
         Cache cache = cacheFactory.getCache("se.nackswinget.confluence.plugin.courses");
@@ -127,14 +105,14 @@ public class EventsMacro extends BaseMacro
         StringBuilder builder = new StringBuilder();
         Courses courses;
 
-        if (urlParam == null)
+        if (args.url == null)
         {
             throw new MacroException("No URL source specified");
         }
 
         try
         {
-            courses = (Courses)cache.get(urlParam);
+            courses = (Courses)cache.get(args.url);
         }
         catch (ClassCastException e)
         {
@@ -146,7 +124,7 @@ public class EventsMacro extends BaseMacro
             HttpResponse response;
             try
             {
-                response = httpRetrievalService.get(urlParam);
+                response = httpRetrievalService.get(args.url);
             }
             catch (IOException e)
             {
@@ -171,15 +149,15 @@ public class EventsMacro extends BaseMacro
                 return wikiStyleRenderer.convertWikiToXHtml(renderContext, "{warning:title=Kunde inte visa kurslistan}Misslyckades att l&auml;sa fr&aring;n den externa k&auml;llan{warning}");
             }
 
-            cache.put(urlParam, courses);
+            cache.put(args.url, courses);
         }
 
         List<Event> events = new ArrayList<Event>(courses.events.entries);
         {
-            if (limitParam != null)
+            if (args.limit >= 0)
             {
-                long limitOffset = Long.valueOf(limitParam) * 1000;
-                int stateMask = showStatesParam != null ? buildStateMask(showStatesParam.split(";")) : 0;
+                long limitOffset = Long.valueOf(args.limit) * 1000;
+                int stateMask = args.showStates != null ? buildStateMask(args.showStates) : 0;
                 Date limit = new Date(Calendar.getInstance().getTimeInMillis() + limitOffset);
 
                 List<Event> newEvents = new ArrayList<Event>();
@@ -187,7 +165,7 @@ public class EventsMacro extends BaseMacro
                 for (Event event : events)
                 {
                     RegistrationPeriods periods = event.registrationPeriods;
-                    int state = event.getEventState();
+                    EventState state = event.getEventState();
 
                     if (periods == null)
                     {
@@ -195,12 +173,12 @@ public class EventsMacro extends BaseMacro
                     }
 
                     boolean filtered = false;
-                    if ((stateMask & (1 << state)) != 0)
+                    if ((stateMask & (1 << state.ordinal())) != 0)
                     {
                         switch (state)
                         {
-                            case Event.STATE_HIDDEN:
-                            case Event.STATE_OPEN:
+                            case HIDDEN:
+                            case OPEN:
                             {
                                 if (periods.startDirectReg != null)
                                 {
@@ -219,7 +197,7 @@ public class EventsMacro extends BaseMacro
                             }
                             break;
 
-                            case Event.STATE_DIRECT:
+                            case DIRECT:
                             {
                                 if ((periods.startLateReg != null) && (periods.startLateReg.compareTo(limit) > 0))
                                 {
@@ -239,19 +217,18 @@ public class EventsMacro extends BaseMacro
                 events = newEvents;
             }
 
-            if (hideCategoriesParam != null)
+            if (args.hideCategories != null)
             {
                 List<Event> newEvents = new ArrayList<Event>();
 
-                String[] categories = hideCategoriesParam.split(";");
                 for (Event event : events)
                 {
                     boolean found = false;
-                    for(String pin : categories)
+                    for(int pin : args.hideCategories)
                     {
                         for (Category haystack : event.categories)
                         {
-                            if (haystack.categoryId.equalsIgnoreCase(pin))
+                            if (haystack.categoryIndex == pin)
                             {
                                 found = true;
                                 break;
@@ -268,19 +245,18 @@ public class EventsMacro extends BaseMacro
                 events = newEvents;
             }
 
-            if (showCategoriesParam != null)
+            if (args.showCategories != null)
             {
                 List<Event> newEvents = new ArrayList<Event>();
 
-                String[] categories = showCategoriesParam.split(";");
                 for (Event event : events)
                 {
                     boolean found = false;
-                    for(String pin : categories)
+                    for(int pin : args.showCategories)
                     {
                         for (Category haystack : event.categories)
                         {
-                            if (haystack.categoryId.equalsIgnoreCase(pin))
+                            if (haystack.categoryIndex == pin)
                             {
                                 found = true;
                                 break;
@@ -297,13 +273,13 @@ public class EventsMacro extends BaseMacro
                 events = newEvents;
             }
 
-            if (hideStatesParam != null)
+            if (args.hideStates != null)
             {
-                int stateMask = buildStateMask(hideStatesParam.split(";"));
+                int stateMask = buildStateMask(args.hideStates);
                 List<Event> newEvents = new ArrayList<Event>();
                 for (Event event : events)
                 {
-                    if ((stateMask & (1 << event.getEventState())) != 0)
+                    if ((stateMask & (1 << event.getEventState().ordinal())) != 0)
                     {
                         continue;
                     }
@@ -314,13 +290,13 @@ public class EventsMacro extends BaseMacro
                 events = newEvents;
             }
 
-            if (showStatesParam != null)
+            if (args.showStates != null)
             {
-                int stateMask = buildStateMask(showStatesParam.split(";"));
+                int stateMask = buildStateMask(args.showStates);
                 List<Event> newEvents = new ArrayList<Event>();
                 for (Event event : events)
                 {
-                    int state = event.getEventState();
+                    int state = event.getEventState().ordinal();
 
                     if ((stateMask & (1 << state)) == 0)
                     {
@@ -333,9 +309,9 @@ public class EventsMacro extends BaseMacro
                 events = newEvents;
             }
 
-            if (minLevelParam != null)
+            if (args.minLevel >= 0)
             {
-                int minLevel = Integer.valueOf(minLevelParam);
+                int minLevel = args.minLevel;
                 List<Event> newEvents = new ArrayList<Event>();
                 for (Event event : events)
                 {
@@ -355,9 +331,9 @@ public class EventsMacro extends BaseMacro
                 events = newEvents;
             }
 
-            if (maxLevelParam != null)
+            if (args.maxLevel >= 0)
             {
-                int maxLevel = Integer.valueOf(maxLevelParam);
+                int maxLevel = Integer.valueOf(args.maxLevel);
                 List<Event> newEvents = new ArrayList<Event>();
                 for (Event event : events)
                 {
@@ -377,9 +353,9 @@ public class EventsMacro extends BaseMacro
                 events = newEvents;
             }
 
-            if (startedParam != null)
+            if (args.started != StartedState.DONT_CARE)
             {
-                boolean filter = "yes".equalsIgnoreCase(startedParam);
+                boolean filter = args.started == StartedState.YES;
                 Date now = Calendar.getInstance().getTime();
 
                 List<Event> newEvents = new ArrayList<Event>();
@@ -403,84 +379,45 @@ public class EventsMacro extends BaseMacro
             }
         }
 
-        if (sortParam != null)
+        if (args.sort != SortOrder.OFF)
         {
-            Sorter sorter = null;
-
-            if ("show".equalsIgnoreCase(sortParam))
-            {
-                sorter = new Sorter(CompareKey.SHOW_DATE);
-            }
-            else if ("direct".equalsIgnoreCase(sortParam))
-            {
-                sorter = new Sorter(CompareKey.DIRECT_DATE);
-            }
-            else if ("late".equalsIgnoreCase(sortParam))
-            {
-                sorter = new Sorter(CompareKey.LATE_DATE);
-            }
-            else if ("hide".equalsIgnoreCase(sortParam))
-            {
-                sorter = new Sorter(CompareKey.HIDE_DATE);
-            }
-            else
-            {
-                throw new MacroException("Invalid sort key");
-            }
-
+            Sorter sorter = new Sorter(args.sort);
             Collections.sort(events, sorter);
         }
 
-        if ("velocity".equalsIgnoreCase(typeParam))
+        switch (args.type)
         {
-            Map context = MacroUtils.defaultVelocityContext();
-            context.put("events", events);
+            case VELOCITY:
+            {
+                Map context = MacroUtils.defaultVelocityContext();
+                context.put("events", events);
 
-            builder.append(VelocityUtils.getRenderedContent(body, context));
-        }
-        else if ("wiki".equalsIgnoreCase(typeParam) || typeParam == null)
-        {
-        }
-        else
-        {
+                builder.append(VelocityUtils.getRenderedContent(body, context));
+            }
+            break;
+
+            case XHTML:
+            {
+
+            }
+            break;
+
+            case WIKI:
+            {
+
+            }
+            break;
         }
 
         return builder.toString();
     }
 
-    private int buildStateMask(String[] states)
+    private int buildStateMask(EventState[] states)
     {
         int mask = 0;
-        for (String state : states)
+        for (EventState state : states)
         {
-            if (state.equalsIgnoreCase("unopened"))
-            {
-                mask |= 1 << Event.STATE_UNOPENED;
-            }
-            else if (state.equalsIgnoreCase("interest"))
-            {
-                mask |= 1 << Event.STATE_INTEREST;
-            }
-            else if (state.equalsIgnoreCase("direct"))
-            {
-                mask |= 1 << Event.STATE_DIRECT;
-            }
-            else if (state.equalsIgnoreCase("open"))
-            {
-                mask |= 1 << Event.STATE_OPEN;
-            }
-            else if (state.equalsIgnoreCase("late"))
-            {
-                mask |= 1 << Event.STATE_LATE;
-            }
-            else if (state.equalsIgnoreCase("closed"))
-            {
-                mask |= 1 << Event.STATE_CLOSED;
-            }
-            else if (state.equalsIgnoreCase("hidden"))
-            {
-                mask |= 1 << Event.STATE_HIDDEN;
-            }
+            mask |= 1 << state.ordinal();
         }
 
         return mask;
@@ -488,9 +425,9 @@ public class EventsMacro extends BaseMacro
 
     class Sorter implements Comparator<Event>
     {
-        private CompareKey key;
+        private SortOrder key;
 
-        public Sorter(CompareKey key)
+        public Sorter(SortOrder key)
         {
             this.key = key;
         }
@@ -503,7 +440,7 @@ public class EventsMacro extends BaseMacro
             return d1.compareTo(d2);
         }
 
-        private Date getDate(Event o1, CompareKey key)
+        private Date getDate(Event o1, SortOrder key)
         {
             if (o1.registrationPeriods == null)
             {
@@ -514,12 +451,12 @@ public class EventsMacro extends BaseMacro
 
             switch (key)
             {
-                case SHOW_DATE:
+                case SHOW:
                 {
                     return periods.startShowing;
                 }
 
-                case DIRECT_DATE:
+                case DIRECT:
                 {
                     if (periods.startDirectReg != null)
                     {
@@ -532,7 +469,7 @@ public class EventsMacro extends BaseMacro
                 }
                 break;
 
-                case LATE_DATE:
+                case LATE:
                 {
                     if (periods.startLateReg != null)
                     {
@@ -545,7 +482,7 @@ public class EventsMacro extends BaseMacro
                 }
                 break;
 
-                case HIDE_DATE:
+                case HIDE:
                 {
                     if (periods.stopShowing != null)
                     {

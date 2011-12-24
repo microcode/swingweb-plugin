@@ -5,7 +5,7 @@
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
     </plugin-info>
 
-    <macro name="swingweb-events" class="se.microcode.confluence.plugin.EventsMacro" key="swingweb-events">
+    <macro name="swingweb-events" class="se.microcode.confluence.plugin.wiki.EventsMacro" key="swingweb-events">
         <description>Parse SwingWeb courses and display them in a sensible way</description>
         <parameters>
             <parameter name="url" type="string" required="true"/>
