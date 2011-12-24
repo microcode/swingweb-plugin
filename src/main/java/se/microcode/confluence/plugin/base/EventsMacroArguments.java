@@ -6,6 +6,7 @@ public class EventsMacroArguments
 {
     public EventsMacroArguments()
     {
+        type = DisplayType.VELOCITY;
         minLevel = -1;
         maxLevel = -1;
         limit = -1;

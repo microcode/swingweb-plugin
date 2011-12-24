@@ -5,10 +5,12 @@
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
     </plugin-info>
 
+    <resource type="i18n" name="i18n" location="${project.groupId}.${project.artifactId}.i18n"/>
+
     <macro name="swingweb-events" class="se.microcode.confluence.plugin.wiki.EventsMacro" key="swingweb-events">
         <description>Parse SwingWeb courses and display them in a sensible way</description>
         <parameters>
-            <parameter name="type" type="enum">
+            <parameter name="type" type="enum" default="velocity">
                 <value name="velocity"/>
                 <value name="xhtml"/>
                 <value name="wiki"/>
