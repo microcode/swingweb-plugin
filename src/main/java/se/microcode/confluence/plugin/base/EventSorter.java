@@ -7,75 +7,109 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 
-public class EventSorter implements Comparator<Event>
+class ShowSorter extends EventSorter
 {
-    private SortOrder key;
-
-    public EventSorter(SortOrder key)
+    @Override
+    public Date getDate(Event o)
     {
-        this.key = key;
-    }
+        RegistrationPeriods periods = o.registrationPeriods;
+        if (periods != null)
+        {
+            return periods.startShowing;
+        }
 
+        return Calendar.getInstance().getTime();
+    }
+}
+
+class DirectSorter extends EventSorter
+{
+    @Override
+    public Date getDate(Event o)
+    {
+        RegistrationPeriods periods = o.registrationPeriods;
+        if (periods != null)
+        {
+            if (periods.startDirectReg != null)
+            {
+                return periods.startDirectReg;
+            }
+            else if (periods.stopShowing != null)
+            {
+                return periods.stopShowing;
+            }
+        }
+
+        return Calendar.getInstance().getTime();
+    }
+}
+
+class LateSorter extends EventSorter
+{
+    @Override
+    public Date getDate(Event o)
+    {
+        RegistrationPeriods periods = o.registrationPeriods;
+        if (periods != null)
+        {
+            if (periods.startLateReg != null)
+            {
+                return periods.startLateReg;
+            }
+            else if (periods.stopShowing != null)
+            {
+                return periods.stopShowing;
+            }
+        }
+
+        return Calendar.getInstance().getTime();
+    }
+}
+
+class HideSorter extends EventSorter
+{
+    @Override
+    public Date getDate(Event o)
+    {
+        RegistrationPeriods periods = o.registrationPeriods;
+        if (periods != null)
+        {
+            if (periods.stopShowing != null)
+            {
+                return periods.stopShowing;
+            }
+        }
+
+        return Calendar.getInstance().getTime();
+    }
+}
+
+abstract public class EventSorter implements Comparator<Event>
+{
     public int compare(Event o1, Event o2)
     {
-        Date d1 = getDate(o1, key);
-        Date d2 = getDate(o2, key);
+        Date d1 = getDate(o1);
+        Date d2 = getDate(o2);
 
         return d1.compareTo(d2);
     }
 
-    private Date getDate(Event o1, SortOrder key)
+    abstract public Date getDate(Event o);
+
+    public static EventSorter createSorter(SortOrder key)
     {
-        if (o1.registrationPeriods == null)
-        {
-            return Calendar.getInstance().getTime();
-        }
-
-        RegistrationPeriods periods = o1.registrationPeriods;
-
         switch (key)
         {
             case SHOW:
-            {
-                return periods.startShowing;
-            }
-
+                return new ShowSorter();
             case DIRECT:
-            {
-                if (periods.startDirectReg != null)
-                {
-                    return periods.startDirectReg;
-                }
-                else if (periods.stopShowing != null)
-                {
-                    return periods.stopShowing;
-                }
-            }
-            break;
-
+                return new DirectSorter();
             case LATE:
-            {
-                if (periods.startLateReg != null)
-                {
-                    return periods.startLateReg;
-                }
-                else if (periods.stopShowing != null)
-                {
-                    return periods.stopShowing;
-                }
-            }
-            break;
-
+                return new LateSorter();
             case HIDE:
-            {
-                if (periods.stopShowing != null)
-                {
-                    return periods.stopShowing;
-                }
-            }
-            break;
-        }
+                return new HideSorter();
 
-        return Calendar.getInstance().getTime();
+        }
+        return null;
     }
 }

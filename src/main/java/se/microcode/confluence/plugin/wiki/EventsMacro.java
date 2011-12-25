@@ -102,7 +102,7 @@ public class EventsMacro extends BaseMacro
 
         if (args.sort != SortOrder.OFF)
         {
-            EventSorter sorter = new EventSorter(args.sort);
+            EventSorter sorter = EventSorter.createSorter(args.sort);
             Collections.sort(events, sorter);
         }
 
