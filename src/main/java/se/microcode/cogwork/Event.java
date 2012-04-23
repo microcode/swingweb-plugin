@@ -318,9 +318,12 @@ public class Event
             return EventState.HIDDEN;
         }
 
-        if (registrationPeriods.startDirectReg == null && registrationPeriods.startOpenReg == null && registrationPeriods.startInterestReg == null && registrationPeriods.startShowing != null && now.compareTo(registrationPeriods.startShowing) >= 0)
+        if (registrationPeriods.startShowing != null && now.compareTo(registrationPeriods.startShowing) >= 0)
         {
-            return EventState.OPEN;
+            if (registrationPeriods.startOpenReg == null && registrationPeriods.startInterestReg == null)
+            {
+                return EventState.OPEN;
+            }
         }
 
         return EventState.UNOPENED;
