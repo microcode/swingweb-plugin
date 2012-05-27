@@ -82,7 +82,8 @@ public class EventsMacro implements Macro
         Courses courses = EventsHelper.fetchCourses(args.url, httpRetrievalService, xstream);
         if (courses == null || courses.events == null)
         {
-            throw new MacroExecutionException("Could not download events");
+            //throw new MacroExecutionException("Could not download events");
+            return "";
         }
 
         List<Event> events = new ArrayList<Event>(courses.events.entries);
