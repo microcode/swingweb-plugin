@@ -16,6 +16,7 @@
                 <value name="wiki"/>
             </parameter>
             <parameter name="url" type="string" required="true"/>
+            <parameter name="registrations" type="string" required="false"/>
             <parameter name="hideCategories" type="int" multiple="true"/>
             <parameter name="showCategories" type="int" multiple="true"/>
             <parameter name="hideStates" type="enum" multiple="true">
@@ -43,6 +44,7 @@
                 <value name="show"/>
                 <value name="direct"/>
                 <value name="late"/>
+                <value name="start"/>
                 <value name="hide"/>
             </parameter>
             <parameter name="started" type="enum">
@@ -61,6 +63,7 @@
                 <value name="wiki"/>
             </parameter>
             <parameter name="url" type="string" required="true"/>
+            <parameter name="registrations" type="string" required="false"/>
             <parameter name="hideCategories" type="int" multiple="true"/>
             <parameter name="showCategories" type="int" multiple="true"/>
             <parameter name="hideStates" type="enum" multiple="true">
@@ -88,6 +91,7 @@
                 <value name="show"/>
                 <value name="direct"/>
                 <value name="late"/>
+                <value name="start"/>
                 <value name="hide"/>
             </parameter>
             <parameter name="started" type="enum">

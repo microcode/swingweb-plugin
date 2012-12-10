@@ -34,6 +34,8 @@ public class Event
     public List<Level> requirements;
     Instructors instructors;
 
+    public List<Team> teams;
+
     public String longdescription;
 
     public int getEventId()
@@ -327,6 +329,20 @@ public class Event
         }
 
         return EventState.UNOPENED;
+    }
+
+    public List<Team> getTeams()
+    {
+        if (teams != null)
+        {
+            return teams;
+        }
+        return new ArrayList<Team>();
+    }
+
+    public int getTeamCount()
+    {
+        return teams != null ? teams.size() : 0;
     }
 
     public String getLongDescription()

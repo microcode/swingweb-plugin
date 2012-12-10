@@ -2,6 +2,7 @@ package se.microcode.confluence.plugin.base;
 
 import com.atlassian.cache.Cache;
 import com.atlassian.cache.CacheFactory;
+import com.atlassian.confluence.spaces.actions.AddTeamLabelToSpaceAction;
 import com.atlassian.confluence.util.http.HttpResponse;
 import com.atlassian.confluence.util.http.HttpRetrievalService;
 import com.atlassian.renderer.v2.macro.MacroException;
@@ -9,14 +10,21 @@ import com.atlassian.spring.container.ContainerManager;
 import com.opensymphony.webwork.ServletActionContext;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.ConversionException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import se.microcode.cogwork.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class EventsHelper
 {
@@ -65,13 +73,11 @@ public class EventsHelper
             catch (IOException e)
             {
                 return null;
-                //return wikiStyleRenderer.convertWikiToXHtml(renderContext, "{warning:title=Kunde inte visa kurslistan}Misslyckades att h&auml;mta den fr&aring;n den externa k&auml;llan{warning}");
             }
 
             if (response.getStatusCode() != 200)
             {
                 return null;
-                //return wikiStyleRenderer.convertWikiToXHtml(renderContext, "{warning:title=Kunde inte visa kurslistan}Misslyckades att h&auml;mta den fr&aring;n den externa k&auml;llan (felkod " + response.getStatusCode() + "){warning}");
             }
 
             try
@@ -81,18 +87,186 @@ public class EventsHelper
             catch (IOException e)
             {
                 return null;
-                //return wikiStyleRenderer.convertWikiToXHtml(renderContext, "{warning:title=Kunde inte visa kurslistan}Misslyckades att h&auml;mta datan fr&aring;n den externa k&auml;llan{warning}");
             }
             catch (ConversionException e)
             {
                 return null;
-                //return wikiStyleRenderer.convertWikiToXHtml(renderContext, "{warning:title=Kunde inte visa kurslistan}Misslyckades att l&auml;sa fr&aring;n den externa k&auml;llan{warning}");
             }
 
             cache.put(url, courses);
         }
 
         return courses;
+    }
+
+    public static List<Event> fetchRegistrations(String url, HttpRetrievalService httpRetrievalService)
+    {
+        CacheFactory cacheFactory = (CacheFactory) ContainerManager.getComponent("cacheManager");
+        Cache cache = cacheFactory.getCache("se.nackswinget.confluence.plugin.courses");
+
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+        Pattern eventRegex = Pattern.compile("event_([0-9]+)");
+        Pattern nameRegex = Pattern.compile("(.+?)(?:, (.+?))? & (.+)");
+
+        HttpServletRequest request = ServletActionContext.getRequest();
+        boolean flushCache = false;
+
+        if (request != null)
+        {
+            try
+            {
+                flushCache = Boolean.parseBoolean(request.getParameter("flush-cache"));
+            }
+            catch (NumberFormatException e)
+            {
+            }
+        }
+
+        if (flushCache)
+        {
+            cache.removeAll();
+        }
+
+        List<Event> events = null;
+        try
+        {
+            events = (List<Event>)cache.get(url);
+        }
+        catch (ClassCastException e)
+        {
+            events = null;
+        }
+
+        HttpResponse response;
+        try
+        {
+            response = httpRetrievalService.get(url);
+        }
+        catch (IOException e)
+        {
+            return null;
+        }
+
+        if (response.getStatusCode() != 200)
+        {
+            return null;
+        }
+
+        Document dom;
+        try
+        {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            dom = db.parse(response.getResponse());
+        }
+        catch (ParserConfigurationException e)
+        {
+            return null;
+        }
+        catch (SAXException e)
+        {
+            return null;
+        }
+        catch (IOException e)
+        {
+            return null;
+        }
+
+        events = new ArrayList<Event>();
+        try
+        {
+            Element doc = dom.getDocumentElement();
+            Element competitions = (Element)doc.getElementsByTagName("tbody").item(0);
+
+            Event current = null;
+
+            NodeList rows = competitions.getElementsByTagName("tr");
+            for (int i = 0, n = rows.getLength(); i != n; ++i)
+            {
+                Element row = (Element)rows.item(i);
+
+                if (row.hasAttributes() && row.hasAttribute("id"))
+                {
+                    if (current != null)
+                    {
+                        events.add(current);
+                    }
+
+                    String idText = row.getAttribute("id");
+                    Matcher eventMatcher = eventRegex.matcher(idText);
+                    eventMatcher.find();
+                    int eventId = Integer.valueOf(eventMatcher.group(1));
+
+                    current = new Event();
+                    current.eventId = eventId;
+                    current.teams = new ArrayList<Team>();
+                    continue;
+                }
+
+                if (current == null)
+                {
+                    continue;
+                }
+
+                NodeList columns = row.getElementsByTagName("td");
+                if (columns.getLength() < 4)
+                {
+                    continue;
+                }
+
+                String teamText = columns.item(1).getChildNodes().item(0).getNodeValue();
+                Matcher nameMatcher = nameRegex.matcher(teamText);
+                nameMatcher.find();
+                List<String> nameMatches = new ArrayList<String>();
+                for (int j = 1, m = nameMatcher.groupCount(); j <= m; ++j)
+                {
+                    String nameMatch = nameMatcher.group(j);
+                    if (nameMatch == null)
+                    {
+                        continue;
+                    }
+                    nameMatches.add(nameMatch);
+                }
+
+                List<String> clubMatches = new ArrayList<String>();
+                NodeList clubs = ((Element)columns.item(2)).getElementsByTagName("span");
+                for (int j = 0, m = clubs.getLength(); j != m; ++j)
+                {
+                    clubMatches.add(clubs.item(j).getChildNodes().item(0).getNodeValue());
+                }
+
+                Team team = new Team();
+                team.classType = columns.item(0).getChildNodes().item(0).getNodeValue();
+                team.names = nameMatches;
+                team.clubs = clubMatches;
+                team.state = columns.item(3).getChildNodes().item(0).getNodeValue();
+                current.teams.add(team);
+            }
+        }
+        catch (NullPointerException e)
+        {
+            return null;
+        }
+
+        cache.put(url, events);
+        return events;
+    }
+
+    public static void mergeWithRegistrations(Courses courses, List<Event> events)
+    {
+        Map<Integer, Event> eventXref = new HashMap<Integer, Event>();
+        for (Event event : events)
+        {
+            eventXref.put(event.eventId, event);
+        }
+
+        for (Event course : courses.events.entries)
+        {
+            if (eventXref.containsKey(course.eventId))
+            {
+                course.teams = eventXref.get(course.eventId).teams;
+            }
+        }
     }
 
     public static List<Event> processLimits(List<Event> events, int limitValue, EventState[] showStates)

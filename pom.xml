@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>se.microcode.confluence.plugin</groupId>
     <artifactId>swingweb-plugin</artifactId>
     <version>1.0</version>
-
     <organization>
         <name>Jesper Svennevid</name>
         <url>http://www.microcode.se/</url>
     </organization>
-
     <name>swingweb-plugin</name>
     <description>SwingWeb feed parsing plugin for confluence</description>
     <packaging>atlassian-plugin</packaging>
-
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -66,13 +60,12 @@
             <version>1.0</version>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>com.atlassian.maven.plugins</groupId>
                 <artifactId>maven-confluence-plugin</artifactId>
-                <version>3.2.4</version>
+                <version>${amps.version}</version>
                 <extensions>true</extensions>
                 <configuration>
                     <productVersion>${confluence.version}</productVersion>
@@ -88,10 +81,9 @@
             </plugin>
         </plugins>
     </build>
-
     <properties>
         <confluence.version>4.0</confluence.version>
         <confluence.data.version>3.5</confluence.data.version>
+        <amps.version>4.1</amps.version>
     </properties>
-
 </project>

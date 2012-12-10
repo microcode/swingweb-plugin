@@ -2,6 +2,7 @@ package se.microcode.confluence.plugin.base;
 
 import se.microcode.cogwork.Event;
 import se.microcode.cogwork.RegistrationPeriods;
+import se.microcode.cogwork.Schedule;
 
 import java.util.Calendar;
 import java.util.Comparator;
@@ -84,6 +85,20 @@ class HideSorter extends EventSorter
     }
 }
 
+class StartSorter extends EventSorter
+{
+    @Override
+    public Date getDate(Event o)
+    {
+        Schedule schedule = o.schedule;
+        if (schedule != null)
+        {
+            return schedule.startDate;
+        }
+        return Calendar.getInstance().getTime();
+    }
+}
+
 abstract public class EventSorter implements Comparator<Event>
 {
     public int compare(Event o1, Event o2)
@@ -106,9 +121,10 @@ abstract public class EventSorter implements Comparator<Event>
                 return new DirectSorter();
             case LATE:
                 return new LateSorter();
+            case START:
+                return new StartSorter();
             case HIDE:
                 return new HideSorter();
-
         }
         return null;
     }

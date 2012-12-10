@@ -16,6 +16,7 @@ public class EventsMacroArguments
 
     public DisplayType type;
     public String url;
+    public String registrations;
     public int[] hideCategories;
     public int[] showCategories;
     public EventState[] hideStates;

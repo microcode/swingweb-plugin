@@ -86,6 +86,12 @@ public class EventsMacro implements Macro
             return "";
         }
 
+        if (args.registrations != null)
+        {
+            List<Event> registrations = EventsHelper.fetchRegistrations(args.registrations, httpRetrievalService);
+            EventsHelper.mergeWithRegistrations(courses, registrations);
+        }
+
         List<Event> events = new ArrayList<Event>(courses.events.entries);
         StringBuilder builder = new StringBuilder();
 
