@@ -97,6 +97,16 @@ public class Event
         return builder.toString();
     }
 
+    public String parseLongDate(Date date)
+    {
+        String base = parseDate(date);
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        int year = cal.get(Calendar.YEAR);
+        return base + " " + Integer.toString(year);
+    }
+
     public String getShortCourseDate()
     {
         do
@@ -135,6 +145,29 @@ public class Event
             }
 
             return parseDate(schedule.startDate);
+        }
+        while (false);
+
+        return builder.toString();
+    }
+
+    public String getLongCourseDate()
+    {
+        StringBuilder builder = new StringBuilder();
+
+        do
+        {
+            if (schedule == null)
+            {
+                break;
+            }
+
+            if (schedule.startDate == null)
+            {
+                break;
+            }
+
+            return parseLongDate(schedule.startDate);
         }
         while (false);
 
