@@ -28,6 +28,7 @@ public class Event
     public String place;
     public Pricing pricing;
     public RegistrationPeriods registrationPeriods;
+    public Registration registration;
     public Schedule schedule;
 
     public List<Category> categories;
@@ -393,15 +394,13 @@ public class Event
 
     public String getEventLink()
     {
-        switch (getEventState())
-        {
-            case CLOSED:
-            case HIDDEN:
-            case UNOPENED:
-                return "http://www.swingweb.org/tools/reg/?org=nsw;eventId=" + getEventId() + ";info=1";
+        if (registration != null) {
+            if (registration.url != null) {
+                return registration.url;
+            }
         }
 
-        return "http://www.swingweb.org/tools/reg/?org=nsw;eventId=" + getEventId() + ";info=0";
+        return "http://dans.se/shop/?org=nsw;event=" + getEventId();
     }
 
     public String getCustomLink()
