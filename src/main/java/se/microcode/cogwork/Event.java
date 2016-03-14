@@ -78,7 +78,7 @@ public class Event
         int day = cal.get(Calendar.DAY_OF_MONTH);
         int month = cal.get(Calendar.MONTH);
 
-        builder.append(day + (day < 3 ? ":a " : ":e "));
+        builder.append(day).append(day < 3 ? ":a " : ":e ");
         switch (month)
         {
             case 0: builder.append("Januari"); break;
@@ -110,69 +110,48 @@ public class Event
 
     public String getShortCourseDate()
     {
-        do
-        {
-            if (schedule == null)
-            {
-                break;
-            }
-
-            if (schedule.startDate == null)
-            {
-                break;
-            }
-
-            return parseShortDate(schedule.startDate);
+        if (schedule == null) {
+            return "";
         }
-        while (false);
 
-        return "";
+        if (schedule.startDate == null) {
+            return "";
+        }
+
+        return parseShortDate(schedule.startDate);
+
     }
 
     public String getCourseDate()
     {
         StringBuilder builder = new StringBuilder();
 
-        do
-        {
-            if (schedule == null)
-            {
-                break;
-            }
-
-            if (schedule.startDate == null)
-            {
-                break;
-            }
-
-            return parseDate(schedule.startDate);
+        if (schedule == null) {
+            return builder.toString();
         }
-        while (false);
 
-        return builder.toString();
+        if (schedule.startDate == null) {
+            return builder.toString();
+        }
+
+        return parseDate(schedule.startDate);
     }
 
     public String getLongCourseDate()
     {
         StringBuilder builder = new StringBuilder();
 
-        do
+        if (schedule == null)
         {
-            if (schedule == null)
-            {
-                break;
-            }
-
-            if (schedule.startDate == null)
-            {
-                break;
-            }
-
-            return parseLongDate(schedule.startDate);
+            return builder.toString();
         }
-        while (false);
 
-        return builder.toString();
+        if (schedule.startDate == null)
+        {
+            return builder.toString();
+        }
+
+        return parseLongDate(schedule.startDate);
     }
 
     public String getStartDate()
@@ -400,7 +379,7 @@ public class Event
             }
         }
 
-        return "http://dans.se/shop/?org=nsw;event=" + getEventId();
+        return "#";
     }
 
     public String getCustomLink()
